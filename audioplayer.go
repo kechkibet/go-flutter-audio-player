@@ -25,33 +25,49 @@ func (p *AudioPlayer) InitPlugin(messenger plugin.BinaryMessenger) error {
 }
 
 func handlePlayAudio(arguments interface{}) (reply interface{}, err error) {
-	playAudio() // Your platform-specific API
-	return true, nil
+	argsMap := arguments.(map[interface{}]interface{})
+	url := argsMap["url"].(string)
+	return playAudio(url), nil
 }
 
-func playAudio() {
-	const url = "https://web-mall-cdn.ams3.digitaloceanspaces.com/8180d349-9269-4958-8929-fb025041be90?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=Q6MAXU4EJUULDWY2OYJT%2F20210307%2Fams3%2Fs3%2Faws4_request&X-Amz-Date=20210307T181541Z&X-Amz-Expires=604800&X-Amz-SignedHeaders=host&X-Amz-Signature=92514ecbbff1cc1457946bf2777968ba2a566ccdc8ec099afa682b66a92248eb"
+func playAudio(url string) bool {
+	//const url1 = "https://web-mall-cdn.ams3.digitaloceanspaces.com/8180d349-9269-4958-8929-fb025041be90?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=Q6MAXU4EJUULDWY2OYJT%2F20210307%2Fams3%2Fs3%2Faws4_request&X-Amz-Date=20210307T181541Z&X-Amz-Expires=604800&X-Amz-SignedHeaders=host&X-Amz-Signature=92514ecbbff1cc1457946bf2777968ba2a566ccdc8ec099afa682b66a92248eb"
 	//f, err := os.Open("gunshot.mp3")
 	r, _ := req.Get(url)
-	r.ToFile("message.wav")
+	err := r.ToFile("message.wav")
+	if err != nil {
+		log.Fatal(err)
+		return false
+	}
 
 	f, err := os.Open("message.wav")
 
 	if err != nil {
 		log.Fatal(err)
+		return false
 	}
 
 	streamer, format, err := wav.Decode(f)
 	if err != nil {
 		log.Fatal(err)
+		return false
 	}
 
-	speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/5))
+	err = speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/5))
+	if err != nil {
+		log.Fatal(err)
+		return false
+	}
 
 	buffer := beep.NewBuffer(format)
 	buffer.Append(streamer)
-	streamer.Close()
+	err = streamer.Close()
+	if err != nil {
+		log.Fatal(err)
+		return false
+	}
 
 	shot := buffer.Streamer(0, buffer.Len())
 	speaker.Play(shot)
+	return true
 }
