@@ -1,4 +1,4 @@
-package main
+package audioplayer
 
 import (
 	"github.com/faiface/beep"
