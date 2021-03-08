@@ -1,4 +1,4 @@
-module audioplayer
+module github.com/kechkibet/go-flutter-audio-player
 
 go 1.12
 
