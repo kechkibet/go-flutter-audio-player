@@ -1,6 +1,7 @@
 package audioplayer
 
 import (
+	"errors"
 	"github.com/faiface/beep"
 	"github.com/faiface/beep/speaker"
 	"github.com/faiface/beep/wav"
@@ -38,6 +39,9 @@ func playAudio(url string) (bool, error) {
 	if err != nil {
 		log.Fatal(err)
 		return false, err
+	}
+	if r.Response().StatusCode != 200 {
+		return false, errors.New(string(r.Response().StatusCode))
 	}
 	err = r.ToFile("message.wav")
 	if err != nil {
