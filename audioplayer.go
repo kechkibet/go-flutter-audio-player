@@ -3,8 +3,8 @@ package audioplayer
 import (
 	"errors"
 	"github.com/faiface/beep"
+	"github.com/faiface/beep/mp3"
 	"github.com/faiface/beep/speaker"
-	"github.com/faiface/beep/wav"
 	"github.com/go-flutter-desktop/go-flutter"
 	"github.com/go-flutter-desktop/go-flutter/plugin"
 	"github.com/imroc/req"
@@ -53,30 +53,22 @@ func playAudio(url string) (bool, error) {
 
 	if err != nil {
 		log.Fatal(err)
-		return false, err
 	}
 
-	streamer, format, err := wav.Decode(f)
+	streamer, format, err := mp3.Decode(f)
 	if err != nil {
 		log.Fatal(err)
-		return false, err
 	}
+	defer streamer.Close()
 
-	err = speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/5))
-	if err != nil {
-		log.Fatal(err)
-		return false, err
-	}
+	speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/10))
 
-	buffer := beep.NewBuffer(format)
-	buffer.Append(streamer)
-	err = streamer.Close()
-	if err != nil {
-		log.Fatal(err)
-		return false, err
-	}
+	done := make(chan bool)
+	speaker.Play(beep.Seq(streamer, beep.Callback(func() {
+		done <- true
+	})))
 
-	shot := buffer.Streamer(0, buffer.Len())
-	speaker.Play(shot)
-	return true, nil
+	<-done
+
+	return false, nil
 }
