@@ -48,7 +48,7 @@ func playAudio(url string) (bool, error) {
 		return false, errors.New(string(r.Response().StatusCode))
 	}
 
-	dname, err := ioutil.TempDir("", "sampledir")
+	dname, err := ioutil.TempDir("", "yscmessages")
 
 	fname := filepath.Join(dname, "message.wav")
 
