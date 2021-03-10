@@ -80,7 +80,7 @@ func playAudio(url string) (bool, error) {
 
 	<-done
 
-	defer os.RemoveAll(dname)
+	//defer os.RemoveAll(dname)
 
 	return false, nil
 }
