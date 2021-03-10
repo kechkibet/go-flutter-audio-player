@@ -73,10 +73,9 @@ func playAudio(url string) (bool, error) {
 	speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/5))
 
 	done := make(chan bool)
-	ctrl = &beep.Ctrl{Streamer: beep.Loop(-1, streamer), Paused: false}
-	speaker.Play(ctrl)
-
-	speaker.Lock()
+	speaker.Play(beep.Seq(streamer, beep.Callback(func() {
+		done <- true
+	})))
 
 	<-done
 
