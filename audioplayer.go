@@ -8,8 +8,10 @@ import (
 	"github.com/go-flutter-desktop/go-flutter"
 	"github.com/go-flutter-desktop/go-flutter/plugin"
 	"github.com/imroc/req"
+	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -18,6 +20,8 @@ const channelName = "com.kech.audioplayer/playaudio"
 type AudioPlayer struct{}
 
 var _ flutter.Plugin = &AudioPlayer{} // compile-time type check
+
+var ctrl *beep.Ctrl
 
 func (p *AudioPlayer) InitPlugin(messenger plugin.BinaryMessenger) error {
 	channel := plugin.NewMethodChannel(messenger, channelName, plugin.StandardMethodCodec{})
@@ -43,13 +47,18 @@ func playAudio(url string) (bool, error) {
 	if r.Response().StatusCode != 200 {
 		return false, errors.New(string(r.Response().StatusCode))
 	}
-	err = r.ToFile("message.wav")
+
+	dname, err := ioutil.TempDir("", "sampledir")
+
+	fname := filepath.Join(dname, "message.wav")
+
+	err = r.ToFile(fname)
 	if err != nil {
 		log.Fatal(err)
 		return false, err
 	}
 
-	f, err := os.Open("message.wav")
+	f, err := os.Open(fname)
 
 	if err != nil {
 		log.Fatal(err)
@@ -64,9 +73,10 @@ func playAudio(url string) (bool, error) {
 	speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/5))
 
 	done := make(chan bool)
-	speaker.Play(beep.Seq(streamer, beep.Callback(func() {
-		done <- true
-	})))
+	ctrl = &beep.Ctrl{Streamer: beep.Loop(-1, streamer), Paused: false}
+	speaker.Play(ctrl)
+
+	speaker.Lock()
 
 	<-done
 
