@@ -41,7 +41,7 @@ func playAudio(url string) (bool, error) {
 	//f, err := os.Open("gunshot.mp3")
 	r, err := req.Get(url)
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
 		return false, err
 	}
 	if r.Response().StatusCode != 200 {
@@ -54,23 +54,29 @@ func playAudio(url string) (bool, error) {
 
 	err = r.ToFile(fname)
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
 		return false, err
 	}
 
 	f, err := os.Open(fname)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
+		return false, err
 	}
 
 	streamer, format, err := wav.Decode(f)
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
+		return false, err
 	}
 	defer streamer.Close()
 
-	speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/5))
+	err = speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/5))
+	if err != nil {
+		log.Print(err)
+		return false, err
+	}
 
 	done := make(chan bool)
 	speaker.Play(beep.Seq(streamer, beep.Callback(func() {
